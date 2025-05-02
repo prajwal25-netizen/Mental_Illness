@@ -1,0 +1,150 @@
+
+---
+title: "Mental Illness Data Analysis"
+author: "Prajwal KC"
+output: html_document
+---
+
+## Introduction
+
+This project analyzes a publicly available mental illness prevalence dataset sourced from Kaggle, which contains data from over 200 countries and five major mental health conditions between 1990 and 2020.
+
+While the dataset covers a wide global scope, this report focuses on two main areas:
+- A world map visualization of **schizophrenia prevalence** across all countries
+- A **comparative analysis between Nepal and India** for multiple mental illnesses, including depression, schizophrenia, anxiety, bipolar disorder, and eating disorders
+
+The goal of this analysis is to better understand how mental illness trends vary across time and geography, particularly in the South Asian context.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+library(tidytext)
+```
+
+## Load and Prepare Data
+
+```{r load-data}
+# Load data
+mental_health_data <- read_csv("C:/Users/ThinkBook/Downloads/1- mental-illnesses-prevalence (1).csv")
+
+# Rename columns for clarity
+colnames(mental_health_data) <- c("Country", "Code", "Year", "Schizophrenia", "Depression", "Anxiety", "Bipolar", "Eating_disorder")
+
+# Summary of data
+summary(mental_health_data)
+```
+
+## Global Schizophrenia Prevalence Map
+
+```{r world-map}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+mental_illness_data <- mental_health_data %>%
+  rename(name = Country)
+
+world_data <- left_join(world, mental_illness_data, by = "name")
+
+ggplot(world_data) +
+  geom_sf(aes(fill = Schizophrenia)) +
+  scale_fill_viridis_c(option = "plasma", na.value = "gray90") +
+  labs(title = "Schizophrenia Prevalence Around the World") +
+  theme_minimal()
+```
+
+## Mental Illness Trends in Nepal (1990–2020)
+
+```{r nepal-trends}
+Nepal <- mental_health_data %>%
+  filter(Country == "Nepal")
+
+DA <- Nepal %>%
+  pivot_longer(cols = c(Depression, Anxiety, Eating_disorder, Schizophrenia, Bipolar),
+               names_to = "Mental_illness",
+               values_to = "rate")
+
+ggplot(DA, aes(x = Year, y = rate, colour = Mental_illness)) +
+  geom_line() +
+  labs(title = "Mental Illness Trends in Nepal (1990–2020)",
+       x = "Year", y = "Rate") +
+  theme_minimal()
+```
+
+## Comparison: Nepal vs India
+
+```{r nepal-india-filter}
+NepInd <- mental_health_data %>%
+  filter(Country %in% c("Nepal", "India"))
+```
+
+### Schizophrenia Trend: Nepal vs India
+
+```{r schizophrenia-compare}
+ggplot(NepInd, aes(x = Year, y = Schizophrenia, colour = Country)) +
+  geom_line(linewidth = 1) +
+  labs(title = "Nepal vs India Schizophrenia Illness Trend (1990–2020)") +
+  theme_minimal()
+```
+
+### Depression Trend: Nepal vs India
+
+```{r depression-compare}
+ggplot(NepInd, aes(x = Year, y = Depression, colour = Country)) +
+  geom_line(linewidth = 1) +
+  labs(title = "Depression Trend in Nepal vs India") +
+  theme_minimal()
+```
+
+## Comparison of Average Mental Illness Prevalence
+
+```{r average-compare}
+avg_illness <- NepInd %>%
+  group_by(Country) %>%
+  summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)))
+
+my_long <- avg_illness %>%
+  pivot_longer(cols = c(Depression, Anxiety, Schizophrenia, Eating_disorder, Bipolar),
+               names_to = "Illness",
+               values_to = "Average")
+
+ggplot(my_long, aes(x = reorder_within(Illness, Average, Country), y = Average, fill = Country)) +
+  geom_col(position = "dodge") +
+  scale_x_reordered() +
+  labs(
+    title = "Average Mental Illness Prevalence: Nepal vs India (1990–2020)",
+    x = "Mental Illness", y = "Average Prevalence"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Interpretation & Insights
+
+The analysis of global and country-specific mental health data revealed several key patterns:
+
+- **Schizophrenia Prevalence (Global)**: The world map showed that schizophrenia affects nearly every country, but the reported prevalence varies significantly. This may reflect both actual burden and differences in diagnostic capacity or reporting quality across countries.
+
+- **Nepal Trends (1990–2020)**: In Nepal, rates of depression, anxiety, and schizophrenia have remained relatively stable but concerning over the 30-year period. Depression showed the highest prevalence among all tracked illnesses, suggesting a widespread public health challenge.
+
+- **Nepal vs. India Comparison**: When comparing Nepal and India:
+  - **Depression** was consistently more prevalent in India than in Nepal across the years.
+  - **Schizophrenia** levels were similar in both countries but slightly higher in India.
+  - Other disorders such as anxiety, bipolar disorder, and eating disorders also followed similar patterns — but depression remained the leading issue in both countries.
+
+- **Bar Graph of Averages**: The bar graph summarizing all illnesses clearly illustrated that **depression is the most common mental health issue in both countries**, followed by anxiety and schizophrenia. This emphasizes the need for targeted interventions and mental health services, especially for depression-related care.
+
+## Final Thought
+
+These insights suggest that mental illness is not only a medical issue but also a **social and public policy concern**. Access to mental health care, early diagnosis, and stigma reduction should be key priorities moving forward.
+
+
+## Conclusion
+
+This analysis highlights the global schizophrenia burden and compares mental illness trends between Nepal and India. While depression appears consistently higher than schizophrenia in both countries, variation in other illnesses shows a need for country-specific mental health strategies.
+
