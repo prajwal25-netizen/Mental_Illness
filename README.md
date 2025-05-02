@@ -1,6 +1,6 @@
 ## Project Summary
 
-This project analyzes global mental health data from 1990–2020, with a focus on Nepal and India. It visualizes global schizophrenia trends and compares the prevalence of several mental illnesses between these two countries.
+This project analyzes global mental health data from 1990–2020, with a focus on Nepal and India. It visualizes global schizophrenia prevalence and compares the trends of several mental illnesses between Nepal and India.
 
 ##  Key Insights
 
